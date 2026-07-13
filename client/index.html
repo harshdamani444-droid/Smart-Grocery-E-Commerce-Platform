@@ -5,9 +5,34 @@
     <link rel="icon" type="image/png" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>HD Mart - Smart Grocery E-Commerce Platform</title>
+    <style>
+      #loading-fallback {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        font-family: sans-serif;
+        background: #f8fafc;
+        color: #475569;
+        font-size: 18px;
+      }
+    </style>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="loading-fallback">Loading HD Mart...</div>
+    </div>
+    <script>
+      // Catch any JS errors before React loads
+      window.onerror = function(msg, src, line, col, err) {
+        document.getElementById('root').innerHTML =
+          '<div style="padding:30px;font-family:monospace;color:red;background:#fff">' +
+          '<h2>JavaScript Error (before React)</h2>' +
+          '<pre>' + msg + '\n' + src + ':' + line + '</pre></div>';
+        return false;
+      };
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
+
