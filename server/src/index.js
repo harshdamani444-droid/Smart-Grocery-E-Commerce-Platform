@@ -52,17 +52,8 @@ const io = new Server(server, {
 app.set('io', io);
 
 // Middleware
-const allowedOrigins = [
-  'http://localhost:5173',
-  process.env.CLIENT_URL,
-].filter(Boolean);
-
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, curl, Render health checks)
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    callback(new Error('Not allowed by CORS'));
-  },
+  origin: true, // Allow all origins — JWT auth protects endpoints; same-domain in production
   credentials: true
 }));
 app.use(express.json());
