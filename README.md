@@ -6,6 +6,8 @@
 
 **A full-stack, feature-rich grocery e-commerce platform built with React + Node.js + MongoDB.**
 
+### 🔗 **[Live Demo — Visit HD Mart](https://smart-grocery-e-commerce-platform-zhjr.onrender.com/)**
+
 [![React](https://img.shields.io/badge/React-19.2-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-Express-339933?style=for-the-badge&logo=node.js)](https://nodejs.org/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Mongoose-47A248?style=for-the-badge&logo=mongodb)](https://mongodb.com/)
@@ -13,6 +15,7 @@
 [![Vite](https://img.shields.io/badge/Vite-Build-646CFF?style=for-the-badge&logo=vite)](https://vitejs.dev/)
 
 </div>
+
 
 ---
 
