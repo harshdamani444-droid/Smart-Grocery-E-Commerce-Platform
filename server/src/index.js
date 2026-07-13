@@ -52,8 +52,17 @@ const io = new Server(server, {
 app.set('io', io);
 
 // Middleware
+const allowedOrigins = [
+  'http://localhost:5173',
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Render health checks)
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true
 }));
 app.use(express.json());
@@ -249,6 +258,18 @@ const autoSeed = async () => {
 };
 
 const PORT = process.env.PORT || 5000;
+
+// ✅ Serve React Frontend in Production
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from client/dist
+  app.use(express.static(path.join(__dirname, '../../client/dist')));
+
+  // All non-API routes → serve React's index.html (for React Router)
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../../client/dist', 'index.html'));
+  });
+  console.log('Serving React frontend from client/dist');
+}
 
 const startServer = async () => {
   await connectDB();
