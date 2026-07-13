@@ -24,7 +24,9 @@ const ProductDetails = () => {
 
   // Setup sockets for live stock changes
   useEffect(() => {
-    const socket = io('http://localhost:5000');
+    // Auto-detect backend URL: same domain in production, localhost in dev
+    const SOCKET_URL = import.meta.env.VITE_API_URL || window.location.origin;
+    const socket = io(SOCKET_URL);
 
     socket.on('stock_update', ({ productId, newStock }) => {
       if (productId === id) {
