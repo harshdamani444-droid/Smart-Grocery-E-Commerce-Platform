@@ -9,6 +9,7 @@ import productRoutes from './routes/productRoutes.js';
 import orderRoutes from './routes/orderRoutes.js';
 import couponRoutes from './routes/couponRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
 import Product from './models/Product.js';
 import User from './models/User.js';
 import Coupon from './models/Coupon.js';
@@ -64,6 +65,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/coupons', couponRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Simple status route
 app.get('/api/status', (req, res) => {
@@ -88,7 +90,7 @@ const autoSeed = async () => {
 
       // Seed coupon codes
       await Coupon.create([
-        { code: 'DMART10', discountType: 'percentage', discountValue: 10, minPurchase: 500, expiryDate: new Date('2027-12-31') },
+        { code: 'HDMART10', discountType: 'percentage', discountValue: 10, minPurchase: 500, expiryDate: new Date('2027-12-31') },
         { code: 'SUPER50', discountType: 'flat', discountValue: 50, minPurchase: 300, expiryDate: new Date('2027-12-31') }
       ]);
 
@@ -107,7 +109,7 @@ const autoSeed = async () => {
       let adminUser = await User.findOne({ email: 'admin@gmail.com' });
       if (!adminUser) {
         adminUser = await User.create({
-          name: 'DMart Admin',
+          name: 'HD Mart Admin',
           email: 'admin@gmail.com',
           password: 'adminpassword',
           role: 'admin'
@@ -136,9 +138,9 @@ const autoSeed = async () => {
             { user: customerId, name: 'Pooja Patil', rating: 4, comment: 'Good size, organic and tasty.' }
           ],
           storeAvailability: [
-            { storeName: 'DMart Powai', stock: 20, lat: 19.1176, lng: 72.9060 },
-            { storeName: 'DMart Malad', stock: 15, lat: 19.1860, lng: 72.8485 },
-            { storeName: 'DMart Thane', stock: 10, lat: 19.2183, lng: 72.9781 }
+            { storeName: 'HD Mart Powai', stock: 20, lat: 19.1176, lng: 72.9060 },
+            { storeName: 'HD Mart Malad', stock: 15, lat: 19.1860, lng: 72.8485 },
+            { storeName: 'HD Mart Thane', stock: 10, lat: 19.2183, lng: 72.9781 }
           ]
         },
         {
@@ -157,9 +159,9 @@ const autoSeed = async () => {
             { user: customerId, name: 'Amit Kumar', rating: 5, comment: 'Tastes pure, excellent cream quality.' }
           ],
           storeAvailability: [
-            { storeName: 'DMart Powai', stock: 25, lat: 19.1176, lng: 72.9060 },
-            { storeName: 'DMart Malad', stock: 20, lat: 19.1860, lng: 72.8485 },
-            { storeName: 'DMart Thane', stock: 15, lat: 19.2183, lng: 72.9781 }
+            { storeName: 'HD Mart Powai', stock: 25, lat: 19.1176, lng: 72.9060 },
+            { storeName: 'HD Mart Malad', stock: 20, lat: 19.1860, lng: 72.8485 },
+            { storeName: 'HD Mart Thane', stock: 15, lat: 19.2183, lng: 72.9781 }
           ]
         },
         {
@@ -175,9 +177,9 @@ const autoSeed = async () => {
           rating: 4.2,
           numReviews: 0,
           storeAvailability: [
-            { storeName: 'DMart Powai', stock: 10, lat: 19.1176, lng: 72.9060 },
-            { storeName: 'DMart Malad', stock: 8, lat: 19.1860, lng: 72.8485 },
-            { storeName: 'DMart Thane', stock: 7, lat: 19.2183, lng: 72.9781 }
+            { storeName: 'HD Mart Powai', stock: 10, lat: 19.1176, lng: 72.9060 },
+            { storeName: 'HD Mart Malad', stock: 8, lat: 19.1860, lng: 72.8485 },
+            { storeName: 'HD Mart Thane', stock: 7, lat: 19.2183, lng: 72.9781 }
           ]
         },
         {
@@ -197,9 +199,9 @@ const autoSeed = async () => {
             { user: customerId, name: 'Sara Khan', rating: 4, comment: 'Crisp and chocolaty.' }
           ],
           storeAvailability: [
-            { storeName: 'DMart Powai', stock: 15, lat: 19.1176, lng: 72.9060 },
-            { storeName: 'DMart Malad', stock: 15, lat: 19.1860, lng: 72.8485 },
-            { storeName: 'DMart Thane', stock: 10, lat: 19.2183, lng: 72.9781 }
+            { storeName: 'HD Mart Powai', stock: 15, lat: 19.1176, lng: 72.9060 },
+            { storeName: 'HD Mart Malad', stock: 15, lat: 19.1860, lng: 72.8485 },
+            { storeName: 'HD Mart Thane', stock: 10, lat: 19.2183, lng: 72.9781 }
           ]
         },
         {
@@ -215,9 +217,9 @@ const autoSeed = async () => {
           rating: 4.4,
           numReviews: 0,
           storeAvailability: [
-            { storeName: 'DMart Powai', stock: 15, lat: 19.1176, lng: 72.9060 },
-            { storeName: 'DMart Malad', stock: 10, lat: 19.1860, lng: 72.8485 },
-            { storeName: 'DMart Thane', stock: 10, lat: 19.2183, lng: 72.9781 }
+            { storeName: 'HD Mart Powai', stock: 15, lat: 19.1176, lng: 72.9060 },
+            { storeName: 'HD Mart Malad', stock: 10, lat: 19.1860, lng: 72.8485 },
+            { storeName: 'HD Mart Thane', stock: 10, lat: 19.2183, lng: 72.9781 }
           ]
         },
         {
@@ -236,9 +238,9 @@ const autoSeed = async () => {
             { user: customerId, name: 'Neelam Joshi', rating: 4, comment: 'Crisp and salty.' }
           ],
           storeAvailability: [
-            { storeName: 'DMart Powai', stock: 2, lat: 19.1176, lng: 72.9060 },
-            { storeName: 'DMart Malad', stock: 2, lat: 19.1860, lng: 72.8485 },
-            { storeName: 'DMart Thane', stock: 1, lat: 19.2183, lng: 72.9781 }
+            { storeName: 'HD Mart Powai', stock: 2, lat: 19.1176, lng: 72.9060 },
+            { storeName: 'HD Mart Malad', stock: 2, lat: 19.1860, lng: 72.8485 },
+            { storeName: 'HD Mart Thane', stock: 1, lat: 19.2183, lng: 72.9781 }
           ]
         }
       ]);

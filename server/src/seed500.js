@@ -309,9 +309,9 @@ const seed500Products = async () => {
           { user: customerId, name: 'Verified Purchaser', rating: 5, comment: 'High quality product, fresh packaging and excellent pricing.' }
         ] : [],
         storeAvailability: [
-          { storeName: 'DMart Powai', stock: Math.round(stock * 0.4), lat: 19.1176, lng: 72.9060 },
-          { storeName: 'DMart Malad', stock: Math.round(stock * 0.3), lat: 19.1860, lng: 72.8485 },
-          { storeName: 'DMart Thane', stock: Math.round(stock * 0.3), lat: 19.2183, lng: 72.9781 }
+          { storeName: 'HD Mart Powai', stock: Math.round(stock * 0.4), lat: 19.1176, lng: 72.9060 },
+          { storeName: 'HD Mart Malad', stock: Math.round(stock * 0.3), lat: 19.1860, lng: 72.8485 },
+          { storeName: 'HD Mart Thane', stock: Math.round(stock * 0.3), lat: 19.2183, lng: 72.9781 }
         ],
         tags: [base.name.toLowerCase(), brand.toLowerCase(), base.category.toLowerCase()]
       });

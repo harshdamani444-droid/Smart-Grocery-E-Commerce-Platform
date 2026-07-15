@@ -43,6 +43,12 @@ const Cart = () => {
   const [modalError, setModalError] = useState('');
   const [placingOrder, setPlacingOrder] = useState(false);
 
+  // Razorpay Integration States
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('razorpay');
+  const [showRzpMockModal, setShowRzpMockModal] = useState(false);
+  const [rzpMockDetails, setRzpMockDetails] = useState(null);
+  const [rzpMockUpi, setRzpMockUpi] = useState('success@razorpay');
+
   // Set default delivery date to tomorrow
   useEffect(() => {
     const tomorrow = new Date();
@@ -66,7 +72,42 @@ const Cart = () => {
     await applyCoupon(couponInput);
   };
 
-  const handleCheckoutSubmit = (e) => {
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) {
+        resolve(true);
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleRazorpayMockSuccess = async () => {
+    setPlacingOrder(true);
+    try {
+      const verifyPayload = {
+        orderId: rzpMockDetails.orderId,
+        razorpay_payment_id: `pay_mock_${Math.random().toString(36).substring(2, 11)}`,
+        razorpay_order_id: rzpMockDetails.rzpOrderId,
+        isMock: true
+      };
+      await api.post('/payment/razorpay/verify', verifyPayload);
+      clearCart();
+      setShowRzpMockModal(false);
+      navigate(`/orders/${rzpMockDetails.orderId}`);
+    } catch (err) {
+      setCheckoutMsg(err.response?.data?.message || 'Error verifying simulation payment.');
+      setShowRzpMockModal(false);
+    } finally {
+      setPlacingOrder(false);
+    }
+  };
+
+  const handleCheckoutSubmit = async (e) => {
     e.preventDefault();
     if (!user) {
       navigate('/login?redirect=cart');
@@ -78,9 +119,100 @@ const Cart = () => {
       return;
     }
     setCheckoutMsg('');
-    setUtrNumber('');
-    setModalError('');
-    setShowPaymentModal(true);
+
+    if (selectedPaymentMethod === 'direct_upi') {
+      setUtrNumber('');
+      setModalError('');
+      setShowPaymentModal(true);
+    } else {
+      // Razorpay checkout flow
+      setPlacingOrder(true);
+      try {
+        const orderData = {
+          orderItems: cartItems.map(item => ({
+            name: item.name,
+            qty: item.qty,
+            image: item.image,
+            price: item.price,
+            product: item._id
+          })),
+          shippingAddress: { street, city, state, zipCode },
+          paymentMethod: 'Razorpay',
+          deliverySlot,
+          deliveryDate,
+          itemsPrice,
+          taxPrice,
+          shippingPrice,
+          discountPrice,
+          totalPrice
+        };
+
+        // 1. Create order on database
+        const { data: order } = await api.post('/orders', orderData);
+
+        // 2. Generate Razorpay order from backend
+        const { data: rzpOrderRes } = await api.post('/payment/razorpay/order', { orderId: order._id });
+
+        if (rzpOrderRes.isMock) {
+          // If keys are not configured, trigger the mock simulation modal
+          setRzpMockDetails({
+            orderId: order._id,
+            rzpOrderId: rzpOrderRes.orderId,
+            amount: totalPrice
+          });
+          setShowRzpMockModal(true);
+        } else {
+          // Load Razorpay Script
+          const isLoaded = await loadRazorpayScript();
+          if (!isLoaded) {
+            setCheckoutMsg('Failed to load Razorpay SDK. Please check your internet connection.');
+            return;
+          }
+
+          const options = {
+            key: rzpOrderRes.keyId,
+            amount: rzpOrderRes.amount,
+            currency: rzpOrderRes.currency,
+            name: 'Smart Grocery Platform',
+            description: `Checkout for Order #${order._id.substring(12)}`,
+            order_id: rzpOrderRes.orderId,
+            handler: async function (response) {
+              setPlacingOrder(true);
+              try {
+                const verifyPayload = {
+                  orderId: order._id,
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature,
+                  isMock: false
+                };
+                await api.post('/payment/razorpay/verify', verifyPayload);
+                clearCart();
+                navigate(`/orders/${order._id}`);
+              } catch (err) {
+                setCheckoutMsg(err.response?.data?.message || 'Payment signature verification failed.');
+              } finally {
+                setPlacingOrder(false);
+              }
+            },
+            prefill: {
+              name: user.name,
+              email: user.email
+            },
+            theme: {
+              color: '#10b981'
+            }
+          };
+
+          const rzpInstance = new window.Razorpay(options);
+          rzpInstance.open();
+        }
+      } catch (err) {
+        setCheckoutMsg(err.response?.data?.message || 'Error starting payment process.');
+      } finally {
+        setPlacingOrder(false);
+      }
+    }
   };
 
   const handlePaymentSuccessSimulate = async (utr) => {
@@ -301,6 +433,63 @@ const Cart = () => {
               </div>
             </div>
           </div>
+
+          {/* Payment Method Selector */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
+            <h3 className="font-bold text-slate-800 text-base flex items-center pb-3 border-b border-slate-50">
+              <CreditCard className="h-5 w-5 mr-2 text-emerald-500" />
+              Select Payment Method
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-4">
+              {/* Razorpay Option */}
+              <button
+                type="button"
+                onClick={() => setSelectedPaymentMethod('razorpay')}
+                className={`flex flex-col items-start p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden ${
+                  selectedPaymentMethod === 'razorpay'
+                    ? 'border-emerald-500 bg-emerald-50/30 ring-1 ring-emerald-500'
+                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-extrabold text-slate-900 text-xs">Razorpay Secure</span>
+                  {selectedPaymentMethod === 'razorpay' && (
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  )}
+                </div>
+                <span className="text-[10px] text-slate-500 mt-1 leading-snug">
+                  Pay securely via UPI, Cards, Netbanking, or Wallets. (Free Test Mode)
+                </span>
+                <span className="inline-block mt-3 px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-[9px] font-bold">
+                  Recommended
+                </span>
+              </button>
+
+              {/* Direct UPI Scan Option */}
+              <button
+                type="button"
+                onClick={() => setSelectedPaymentMethod('direct_upi')}
+                className={`flex flex-col items-start p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden ${
+                  selectedPaymentMethod === 'direct_upi'
+                    ? 'border-emerald-500 bg-emerald-50/30 ring-1 ring-emerald-500'
+                    : 'border-slate-200 hover:border-slate-300 bg-white'
+                }`}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-extrabold text-slate-900 text-xs">Direct UPI Scan</span>
+                  {selectedPaymentMethod === 'direct_upi' && (
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  )}
+                </div>
+                <span className="text-[10px] text-slate-500 mt-1 leading-snug">
+                  Scan QR code manually and enter 12-digit UTR transaction ref.
+                </span>
+                <span className="inline-block mt-3 px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[9px] font-bold">
+                  Manual Verification
+                </span>
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Pricing Summary Sidepanel */}
@@ -327,10 +516,10 @@ const Cart = () => {
                 <form onSubmit={handleApplyCoupon} className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Enter code (DMART10)"
+                    placeholder="Enter code (HDMART10)"
                     value={couponInput}
                     onChange={(e) => setCouponInput(e.target.value)}
-                    className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 w-full uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 w-full uppercase focus:outline-none focus:ring-2 focus:ring-[#02529c]"
                   />
                   <button
                     type="submit"
@@ -374,10 +563,20 @@ const Cart = () => {
 
             <button
               onClick={handleCheckoutSubmit}
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold py-3.5 rounded-full shadow-lg shadow-emerald-100 flex items-center justify-center space-x-2 transition-all cursor-pointer"
+              disabled={placingOrder}
+              className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white font-extrabold py-3.5 rounded-full shadow-lg shadow-emerald-100 flex items-center justify-center space-x-2 transition-all cursor-pointer"
             >
-              <span>Verify & Pay Checkout</span>
-              <ChevronRight className="h-5 w-5" />
+              {placingOrder ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <>
+                  <span>Verify & Pay Checkout</span>
+                  <ChevronRight className="h-5 w-5" />
+                </>
+              )}
             </button>
 
             {checkoutMsg && <div className="text-center text-xs text-red-500 font-bold pt-2">{checkoutMsg}</div>}
@@ -385,6 +584,103 @@ const Cart = () => {
         </div>
 
       </div>
+
+      {/* Razorpay Simulation Modal */}
+      {showRzpMockModal && rzpMockDetails && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full border border-slate-100 shadow-2xl space-y-6 relative overflow-hidden animate-scale-in animate-duration-200">
+            {/* Razorpay brand colored top bar */}
+            <div className="absolute top-0 left-0 w-full h-2 bg-blue-500" />
+            
+            <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+              <div className="flex items-center space-x-2">
+                <span className="text-[#1780EB] font-black text-xl italic tracking-tight">Razorpay</span>
+                <span className="text-[10px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded-full">Test Mode</span>
+              </div>
+              <button 
+                onClick={() => setShowRzpMockModal(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="bg-blue-50/50 border border-blue-100/80 p-4 rounded-2xl space-y-2">
+              <div className="flex items-start space-x-2 text-blue-800 text-xs">
+                <Sparkles className="h-4 w-4 text-blue-500 flex-shrink-0 mt-0.5" />
+                <div>
+                  <span className="font-bold block">Developer Notice: Simulation Active</span>
+                  <span className="text-[11px] text-blue-700 leading-normal block mt-0.5">
+                    Razorpay credentials are not set in `.env`. We are simulating the Razorpay Web Checkout interface.
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex justify-between items-center bg-slate-50 border border-slate-100 p-4 rounded-2xl">
+                <div>
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Order ID</span>
+                  <span className="font-mono text-xs text-slate-700">{rzpMockDetails.rzpOrderId}</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Amount Due</span>
+                  <span className="font-extrabold text-slate-900 text-base">₹{rzpMockDetails.amount}</span>
+                </div>
+              </div>
+
+              {/* UPI App simulation details */}
+              <div className="space-y-2">
+                <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Simulated UPI Address</label>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={rzpMockUpi}
+                    onChange={(e) => setRzpMockUpi(e.target.value)}
+                    placeholder="success@razorpay"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400">
+                  Tip: Any input simulates a successful payment. Use <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-600 font-mono text-[9px]">fail@razorpay</code> to test transaction failure.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => {
+                  if (rzpMockUpi.trim() === 'fail@razorpay') {
+                    setCheckoutMsg('Transaction failed. Simulated payment rejected by customer.');
+                    setShowRzpMockModal(false);
+                    return;
+                  }
+                  handleRazorpayMockSuccess();
+                }}
+                disabled={placingOrder}
+                className="bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold py-3 px-4 rounded-xl transition-all shadow-md flex items-center justify-center space-x-1 cursor-pointer disabled:opacity-50"
+              >
+                {placingOrder ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4" />
+                    <span>Pay Successfully</span>
+                  </>
+                )}
+              </button>
+              
+              <button
+                onClick={() => setShowRzpMockModal(false)}
+                disabled={placingOrder}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold py-3 px-4 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Payment Gateway Modal Mockup */}
       {showPaymentModal && (

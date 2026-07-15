@@ -112,14 +112,14 @@ const Shop = () => {
       {/* Search Header / Scanner Panel */}
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">HD Mart Catalog</h1>
+          <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">HD Mart Savings Catalog</h1>
           <p className="text-slate-500 text-sm mt-1">Browse and find fresh items with advanced grocery filters</p>
         </div>
 
         {/* Scan Barcode button */}
         <button
           onClick={() => setShowScanner(!showScanner)}
-          className="flex items-center justify-center space-x-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold px-5 py-3 rounded-2xl border border-emerald-100 transition-colors shadow-xs cursor-pointer"
+          className="flex items-center justify-center space-x-2 bg-blue-50 text-[#02529c] hover:bg-blue-100 font-bold px-5 py-3 rounded-2xl border border-blue-100 transition-colors shadow-xs cursor-pointer"
         >
           <QrCode className="h-5 w-5" />
           <span>Barcode Simulator</span>
@@ -129,29 +129,29 @@ const Shop = () => {
       {/* Barcode scanner mockup panel */}
       {showScanner && (
         <div className="bg-slate-900 text-white rounded-3xl p-6 mb-8 border border-slate-800 relative overflow-hidden shadow-2xl animate-fade-in">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,0.08),transparent_50%)]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(2,82,156,0.08),transparent_50%)]" />
           
           <div className="max-w-lg mx-auto text-center space-y-4 relative z-10">
             <h3 className="text-lg font-bold flex items-center justify-center space-x-2">
-              <Sparkles className="h-5 w-5 text-emerald-400" />
+              <Sparkles className="h-5 w-5 text-blue-400" />
               <span>Smart Barcode Scanner Simulator</span>
             </h3>
             <p className="text-slate-400 text-xs">
-              Simulate scanning barcode items like you would at the self-checkout counter in DMart. Select a product barcode below to scan.
+              Simulate scanning barcode items like you would at the self-checkout counter in HD Mart. Select a product barcode below to scan.
             </p>
 
             {/* Laser scanning window visualization */}
-            <div className="w-56 h-36 border-2 border-emerald-500/30 rounded-2xl mx-auto flex items-center justify-center bg-slate-950/80 relative shadow-inner overflow-hidden">
+            <div className="w-56 h-36 border-2 border-blue-500/30 rounded-2xl mx-auto flex items-center justify-center bg-slate-950/80 relative shadow-inner overflow-hidden">
               {scannerLoading && (
-                <div className="absolute left-0 w-full h-0.5 bg-emerald-400 shadow-[0_0_10px_#10b981] animate-[bounce_1.5s_infinite]" />
+                <div className="absolute left-0 w-full h-0.5 bg-blue-400 shadow-[0_0_10px_#02529c] animate-[bounce_1.5s_infinite]" />
               )}
               {scannerLoading ? (
-                <div className="flex flex-col items-center space-y-2 text-emerald-400">
+                <div className="flex flex-col items-center space-y-2 text-blue-400">
                   <Loader2 className="h-6 w-6 animate-spin" />
                   <span className="text-[10px] font-bold tracking-widest uppercase">Reading Code...</span>
                 </div>
               ) : scanResult ? (
-                <div className="p-3 text-xs text-emerald-400 font-semibold">{scanResult}</div>
+                <div className="p-3 text-xs text-blue-400 font-semibold">{scanResult}</div>
               ) : (
                 <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Align barcode</div>
               )}
@@ -188,7 +188,7 @@ const Shop = () => {
               </span>
               <button
                 onClick={handleClearFilters}
-                className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 cursor-pointer"
+                className="text-xs font-semibold text-[#02529c] hover:text-blue-800 cursor-pointer"
               >
                 Clear All
               </button>
@@ -204,7 +204,7 @@ const Shop = () => {
                     onClick={() => updateFilters('category', cat)}
                     className={`w-full text-left px-3 py-2 rounded-xl text-sm transition-all flex items-center justify-between cursor-pointer ${
                       category === cat
-                        ? 'bg-emerald-500 text-white font-bold'
+                        ? 'bg-[#02529c] text-white font-bold'
                         : 'text-slate-600 hover:bg-slate-50'
                     }`}
                   >
@@ -226,7 +226,7 @@ const Shop = () => {
                     setMinPrice(e.target.value);
                     updateFilters('minPrice', e.target.value);
                   }}
-                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 w-full focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 w-full focus:outline-none focus:ring-2 focus:ring-[#02529c]"
                 />
                 <input
                   type="number"
@@ -236,7 +236,7 @@ const Shop = () => {
                     setMaxPrice(e.target.value);
                     updateFilters('maxPrice', e.target.value);
                   }}
-                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 w-full focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 w-full focus:outline-none focus:ring-2 focus:ring-[#02529c]"
                 />
               </div>
             </div>
@@ -250,7 +250,7 @@ const Shop = () => {
                   setSort(e.target.value);
                   updateFilters('sort', e.target.value);
                 }}
-                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 w-full focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-700 w-full focus:outline-none focus:ring-2 focus:ring-[#02529c] cursor-pointer"
               >
                 <option value="newest">New Arrivals</option>
                 <option value="priceAsc">Price: Low to High</option>
@@ -277,7 +277,7 @@ const Shop = () => {
               <p className="text-slate-500 text-sm mt-1">Try adjusting search parameters or clearing filters.</p>
               <button
                 onClick={handleClearFilters}
-                className="mt-4 bg-emerald-500 text-white font-semibold px-6 py-2.5 rounded-full hover:bg-emerald-600 transition-colors cursor-pointer"
+                className="mt-4 bg-[#02529c] text-white font-semibold px-6 py-2.5 rounded-full hover:bg-blue-800 transition-colors cursor-pointer"
               >
                 Clear Search & Filters
               </button>

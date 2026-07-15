@@ -4,6 +4,114 @@ import { Package, Truck, CheckCircle2, ChevronRight, MapPin, Calendar, Clock, Sh
 import api from '../utils/api';
 import { AuthContext } from '../context/AuthContext';
 
+// Dynamic self-contained Leaflet map component with dynamic scripts loading
+const LeafletMap = ({ agentLat, agentLng, userLat, userLng, orderStatus }) => {
+  const mapContainerRef = React.useRef(null);
+  const mapRef = React.useRef(null);
+  const agentMarkerRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!mapContainerRef.current) return;
+
+    // Dynamically inject Leaflet CSS stylesheet if not present
+    if (!document.getElementById('leaflet-css-cdn')) {
+      const link = document.createElement('link');
+      link.id = 'leaflet-css-cdn';
+      link.rel = 'stylesheet';
+      link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+      document.head.appendChild(link);
+    }
+
+    // Dynamically load Leaflet library if not present
+    const loadLeaflet = () => {
+      return new Promise((resolve) => {
+        if (window.L) {
+          resolve(window.L);
+          return;
+        }
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        script.onload = () => resolve(window.L);
+        document.body.appendChild(script);
+      });
+    };
+
+    let active = true;
+
+    loadLeaflet().then((L) => {
+      if (!active || !mapContainerRef.current) return;
+
+      // Create Leaflet map instance
+      if (!mapRef.current) {
+        const centerLat = (agentLat + userLat) / 2;
+        const centerLng = (agentLng + userLng) / 2;
+
+        mapRef.current = L.map(mapContainerRef.current, {
+          zoomControl: true,
+          attributionControl: false
+        }).setView([centerLat, centerLng], 14);
+
+        // Load tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapRef.current);
+
+        // User Destination Marker
+        const userIcon = L.divIcon({
+          className: 'custom-user-marker',
+          html: `<div style="background-color: #3b82f6; width: 14px; height: 14px; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 8px rgba(59, 130, 246, 0.7);"></div>`,
+          iconSize: [14, 14]
+        });
+        L.marker([userLat, userLng], { icon: userIcon }).addTo(mapRef.current)
+          .bindPopup('Your Destination Address')
+          .openPopup();
+
+        // Store Source Marker
+        const storeIcon = L.divIcon({
+          className: 'custom-store-marker',
+          html: `<div style="background-color: #10b981; width: 14px; height: 14px; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 8px rgba(16, 185, 129, 0.7);"></div>`,
+          iconSize: [14, 14]
+        });
+        L.marker([19.1176, 72.9060], { icon: storeIcon }).addTo(mapRef.current)
+          .bindPopup('HD Mart Store Powai');
+      }
+
+      // Live Agent Courier Marker
+      if (orderStatus === 'Out For Delivery' && agentLat && agentLng) {
+        if (agentMarkerRef.current) {
+          agentMarkerRef.current.setLatLng([agentLat, agentLng]);
+        } else {
+          const agentIcon = L.divIcon({
+            className: 'custom-agent-marker',
+            html: `<div style="background-color: #f59e0b; width: 22px; height: 22px; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(245, 158, 11, 0.9); display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer;">🚚</div>`,
+            iconSize: [22, 22]
+          });
+          agentMarkerRef.current = L.marker([agentLat, agentLng], { icon: agentIcon }).addTo(mapRef.current)
+            .bindPopup('Courier Ravi Kumar')
+            .openPopup();
+        }
+        // Smoothly pan map to follow courier
+        mapRef.current.panTo([agentLat, agentLng]);
+      } else {
+        // Remove agent marker if not out for delivery
+        if (agentMarkerRef.current) {
+          agentMarkerRef.current.remove();
+          agentMarkerRef.current = null;
+        }
+      }
+    });
+
+    return () => {
+      active = false;
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+        agentMarkerRef.current = null;
+      }
+    };
+  }, [agentLat, agentLng, userLat, userLng, orderStatus]);
+
+  return <div ref={mapContainerRef} className="h-52 w-full rounded-3xl overflow-hidden shadow-inner border border-slate-800" />;
+};
+
 const Orders = () => {
   const { id } = useParams(); // Check if viewing specific order tracking details
   const { user } = useContext(AuthContext);
@@ -13,8 +121,13 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Simulated coordinate offsets for real-time delivery agent tracker
-  const [deliveryAgentPos, setDeliveryAgentPos] = useState({ latOffset: 0.015, lngOffset: 0.015 });
+  const USER_LAT = 19.1235;
+  const USER_LNG = 72.9125;
+  const STORE_LAT = 19.1176;
+  const STORE_LNG = 72.9060;
+
+  const [agentCoords, setAgentCoords] = useState({ lat: STORE_LAT, lng: STORE_LNG });
+  const [progressVal, setProgressVal] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -40,15 +153,16 @@ const Orders = () => {
     fetchData();
   }, [id]);
 
-  // Simulate Delivery Agent location updates moving closer to user home (0,0) when Status is "Out For Delivery"
+  // Simulate Delivery Agent location updates moving from Store to User Home on a real map
   useEffect(() => {
     if (order && order.status === 'Out For Delivery') {
+      let progress = 0;
       const interval = setInterval(() => {
-        setDeliveryAgentPos(prev => {
-          const nextLat = Math.max(0, prev.latOffset - 0.001);
-          const nextLng = Math.max(0, prev.lngOffset - 0.0015);
-          return { latOffset: nextLat, lngOffset: nextLng };
-        });
+        progress = Math.min(1, progress + 0.05); // Move 5% closer every 3 seconds
+        setProgressVal(progress);
+        const currentLat = STORE_LAT + (USER_LAT - STORE_LAT) * progress;
+        const currentLng = STORE_LNG + (USER_LNG - STORE_LNG) * progress;
+        setAgentCoords({ lat: currentLat, lng: currentLng });
       }, 3000);
       return () => clearInterval(interval);
     }
@@ -213,76 +327,14 @@ const Orders = () => {
                 </p>
               </div>
 
-              {/* Simulated Map Visualizer */}
-              <div className="h-52 bg-[#0b1329] border border-slate-800 rounded-3xl relative flex items-center justify-center overflow-hidden shadow-inner">
-                {/* SVG stylized map vector elements */}
-                <svg className="absolute inset-0 h-full w-full opacity-35" viewBox="0 0 100 100" preserveAspectRatio="none">
-                  {/* Styled Green Areas (Parks) */}
-                  <rect x="5" y="10" width="20" height="25" rx="3" fill="#1b4d3e" opacity="0.4" />
-                  <rect x="50" y="5" width="25" height="20" rx="3" fill="#1b4d3e" opacity="0.4" />
-                  <rect x="40" y="65" width="30" height="25" rx="3" fill="#1b4d3e" opacity="0.4" />
-
-                  {/* Water Body (River) */}
-                  <path d="M 0 60 Q 25 80, 50 55 T 100 90" fill="none" stroke="#1d4ed8" strokeWidth="6" opacity="0.3" />
-                  
-                  {/* Grid Road network */}
-                  <line x1="0" y1="30" x2="100" y2="30" stroke="#334155" strokeWidth="0.8" />
-                  <line x1="0" y1="75" x2="100" y2="75" stroke="#334155" strokeWidth="0.8" />
-                  <line x1="30" y1="0" x2="30" y2="100" stroke="#334155" strokeWidth="0.8" />
-                  <line x1="75" y1="0" x2="75" y2="100" stroke="#334155" strokeWidth="0.8" />
-                  
-                  {/* Secondary streets */}
-                  <line x1="0" y1="50" x2="100" y2="50" stroke="#1e293b" strokeWidth="0.5" strokeDasharray="1 1" />
-                  <line x1="55" y1="0" x2="55" y2="100" stroke="#1e293b" strokeWidth="0.5" strokeDasharray="1 1" />
-
-                  {/* Main diagonal avenue where the truck moves */}
-                  <line x1="75" y1="75" x2="30" y2="30" stroke="#475569" strokeWidth="2.5" />
-                  <line x1="75" y1="75" x2="30" y2="30" stroke="#f59e0b" strokeWidth="0.6" strokeDasharray="1.5 1.5" />
-                  
-                  {/* Dotted green route guide path */}
-                  {order.status === 'Out For Delivery' && (
-                    <line x1="75" y1="75" x2="30" y2="30" stroke="#10b981" strokeWidth="1.2" strokeDasharray="2 2" />
-                  )}
-                </svg>
-
-                {/* Tech HUD Grid Pattern overlay */}
-                <div className="absolute inset-0 opacity-10 bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] [background-size:20px_20px]" />
-                
-                {/* Store location point */}
-                <div className="absolute" style={{ top: '75%', left: '75%', transform: 'translate(-50%, -50%)' }}>
-                  <div className="h-4.5 w-4.5 bg-emerald-500 rounded-full border border-white flex items-center justify-center shadow-md relative">
-                    <span className="h-2 w-2 bg-white rounded-full animate-ping absolute" />
-                    <span className="h-2 w-2 bg-white rounded-full relative" />
-                  </div>
-                  <span className="text-[7.5px] font-bold text-slate-400 bg-slate-950/85 px-1 rounded-sm mt-0.5 block whitespace-nowrap -translate-x-1/4">DMart Store</span>
-                </div>
-                
-                {/* Delivery agent pin */}
-                {order.status === 'Out For Delivery' && (
-                  <div 
-                    className="absolute text-center transition-all duration-1000 ease-linear z-10"
-                    style={{ 
-                      top: `${30 + deliveryAgentPos.latOffset * 3000}%`, 
-                      left: `${30 + deliveryAgentPos.lngOffset * 3000}%`,
-                      transform: 'translate(-50%, -50%)'
-                    }}
-                  >
-                    <div className="h-7 w-7 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center shadow-lg relative">
-                      <Truck className="h-3.5 w-3.5 text-white" />
-                      <div className="absolute inset-0 bg-emerald-500 rounded-full animate-ping opacity-60" />
-                    </div>
-                    <span className="text-[8px] font-black text-white bg-emerald-600 px-1.5 py-0.5 rounded-md mt-1 block whitespace-nowrap shadow-sm">Ravi (Agent)</span>
-                  </div>
-                )}
-
-                {/* User Home Location pin (aligned to end location 30%, 30%) */}
-                <div className="absolute z-10 text-center" style={{ top: '30%', left: '30%', transform: 'translate(-50%, -50%)' }}>
-                  <div className="h-5.5 w-5.5 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center shadow-lg">
-                    <MapPin className="h-3.5 w-3.5 text-white" />
-                  </div>
-                  <span className="text-[8px] font-bold text-blue-400 bg-slate-950/85 px-1.5 py-0.5 rounded-md mt-1 block whitespace-nowrap">Your Home</span>
-                </div>
-              </div>
+              {/* Real Interactive Street Map */}
+              <LeafletMap 
+                agentLat={agentCoords.lat} 
+                agentLng={agentCoords.lng} 
+                userLat={USER_LAT} 
+                userLng={USER_LNG}
+                orderStatus={order.status}
+              />
 
               {/* Agent info details */}
               <div className="bg-slate-900 border border-slate-850 p-4 rounded-2xl flex items-center justify-between text-xs">
@@ -294,7 +346,7 @@ const Orders = () => {
                   <span className="text-slate-500 block text-[9px] font-bold uppercase tracking-wider">Distance Status</span>
                   <span className="font-bold text-emerald-400">
                     {order.status === 'Out For Delivery' 
-                      ? `${(deliveryAgentPos.latOffset * 200).toFixed(1)} km away`
+                      ? `${((1 - progressVal) * 3.5).toFixed(2)} km away`
                       : order.status === 'Delivered' 
                       ? 'Arrived' 
                       : 'Pending'}

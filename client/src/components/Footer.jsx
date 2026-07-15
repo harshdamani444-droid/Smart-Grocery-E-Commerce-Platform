@@ -58,7 +58,7 @@ const Footer = () => {
           <div>
             <h3 className="text-white font-bold text-lg mb-4">HD Mart</h3>
             <p className="text-sm text-slate-500 leading-relaxed mb-4">
-              Premium quality grocery shopping inspired by DMart. Get fresh foods, milk, household cleaning items delivered to your slot.
+              Premium quality grocery shopping at HD Mart. Get fresh foods, milk, household cleaning items delivered to your slot.
             </p>
             <div className="text-xs text-slate-600">
               © {new Date().getFullYear()} HD Mart Ltd. All rights reserved.

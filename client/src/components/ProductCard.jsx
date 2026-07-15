@@ -20,9 +20,20 @@ const ProductCard = ({ product }) => {
     addToCart(product, 1);
   };
 
+  const mrp = Math.round(product.price * 1.25);
+  const savings = mrp - product.price;
+  const discountPercent = Math.round((savings / mrp) * 100);
+
   return (
-    <div className="bg-white rounded-3xl border border-slate-100 hover:border-emerald-100 overflow-hidden shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 flex flex-col relative group">
+    <div className="bg-white rounded-3xl border border-slate-150 hover:border-blue-150 overflow-hidden shadow-sm hover:shadow-xl hover:translate-y-[-4px] transition-all duration-300 flex flex-col relative group">
       
+      {/* Discount Badge */}
+      {product.stock > 0 && (
+        <span className="absolute top-4 left-4 bg-[#8dc63f] text-white text-[10px] font-extrabold px-2.5 py-1 rounded-lg shadow-sm z-10">
+          {discountPercent}% OFF
+        </span>
+      )}
+
       {/* Wishlist Button */}
       <button
         onClick={handleWishlistClick}
@@ -66,13 +77,13 @@ const ProductCard = ({ product }) => {
       <div className="p-5 flex-1 flex flex-col justify-between">
         <div>
           {/* Category */}
-          <span className="text-[11px] font-bold text-emerald-600 tracking-wider uppercase">
+          <span className="text-[11px] font-bold text-[#5a9c1e] tracking-wider uppercase">
             {product.category}
           </span>
 
           {/* Name */}
           <Link to={`/product/${product._id}`} className="block mt-1">
-            <h3 className="text-slate-800 font-semibold text-base line-clamp-2 hover:text-emerald-600 transition-colors">
+            <h3 className="text-slate-800 font-semibold text-base line-clamp-2 hover:text-[#02529c] transition-colors">
               {product.name}
             </h3>
           </Link>
@@ -89,26 +100,31 @@ const ProductCard = ({ product }) => {
         </div>
 
         {/* Action / Footer */}
-        <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-50">
+        <div className="mt-4 flex items-center justify-between pt-3 border-t border-slate-100">
           <div>
-            <span className="text-slate-400 text-[10px] block font-medium">DMart Price</span>
-            <span className="text-slate-900 font-extrabold text-lg">₹{product.price}</span>
+            <div className="flex items-center space-x-1.5">
+              <span className="text-slate-900 font-black text-lg">₹{product.price}</span>
+              <span className="text-slate-400 line-through text-xs">₹{mrp}</span>
+            </div>
+            <span className="text-[#5a9c1e] text-[10px] font-extrabold block">
+              Save ₹{savings}
+            </span>
           </div>
 
           {product.stock > 0 ? (
             <button
               onClick={handleAddToCart}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white p-2.5 rounded-2xl flex items-center justify-center transition-all duration-300 hover:shadow-lg hover:shadow-emerald-100 hover:translate-y-[-1px] cursor-pointer"
-              title="Add to cart"
+              className="bg-[#8dc63f] hover:bg-[#79ab33] text-white font-extrabold text-xs px-4.5 py-2.5 rounded-2xl transition-all duration-300 hover:shadow-md hover:translate-y-[-1px] cursor-pointer flex items-center space-x-1"
             >
-              <ShoppingCart className="h-4.5 w-4.5" />
+              <span>ADD</span>
+              <span className="font-bold text-sm">+</span>
             </button>
           ) : (
             <button
               disabled
-              className="bg-slate-100 text-slate-400 p-2.5 rounded-2xl cursor-not-allowed"
+              className="bg-slate-100 text-slate-400 font-extrabold text-xs px-4 py-2.5 rounded-2xl cursor-not-allowed"
             >
-              <ShoppingCart className="h-4.5 w-4.5" />
+              ADD
             </button>
           )}
         </div>

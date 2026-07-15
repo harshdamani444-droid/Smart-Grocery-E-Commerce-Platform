@@ -74,15 +74,24 @@ const Navbar = () => {
   }, [location]);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-100 shadow-sm transition-all duration-300">
+    <>
+      {/* DMart Top Alert Bar */}
+      <div className="bg-[#02529c] text-white text-[10px] sm:text-xs py-2 px-4 text-center font-extrabold tracking-wide flex items-center justify-center space-x-2 sm:space-x-4 border-b border-white/10 relative z-50">
+        <span className="flex items-center">⚡ FREE Home Delivery on orders above ₹1,000!</span>
+        <span className="hidden md:inline text-white/40">|</span>
+        <span className="hidden sm:inline">📞 Support: 1800-200-1234</span>
+        <span className="hidden md:inline text-white/40">|</span>
+        <span className="text-yellow-300">🎟️ Use Code HDMART10 for 10% Flat Discount!</span>
+      </div>
+      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-md transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2.5 flex-shrink-0">
             <img src="/logo.png" alt="HD Mart Logo" className="h-9 sm:h-11 object-contain" />
-            <span className="hidden sm:block text-xl font-black bg-gradient-to-r from-slate-950 to-slate-800 bg-clip-text text-transparent">
-              HD <span className="text-emerald-600">Mart</span>
+            <span className="hidden sm:block text-xl font-black text-[#02529c]">
+              HD <span className="text-[#8dc63f]">Mart</span>
             </span>
           </Link>
 
@@ -94,7 +103,7 @@ const Navbar = () => {
                 placeholder="Search fresh vegetables, dairy, household items..."
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-full px-5 py-2.5 pl-11 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:bg-white transition-all shadow-inner"
+                className="w-full bg-slate-50 border border-slate-200 text-slate-705 rounded-full px-5 py-2.5 pl-11 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-[#02529c] focus:border-[#02529c] focus:bg-white transition-all shadow-inner"
               />
               <Search className="absolute left-4 top-3 h-4.5 w-4.5 text-slate-400" />
             </div>
@@ -115,22 +124,22 @@ const Navbar = () => {
 
           {/* Nav Icons */}
           <div className="hidden lg:flex items-center space-x-6">
-            <Link to="/shop" className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors">
+            <Link to="/shop" className="text-sm font-medium text-slate-600 hover:text-[#02529c] transition-colors">
               Browse All
             </Link>
 
             <Link
               to="/shop?category=Fruits & Vegetables"
-              className="text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors"
+              className="text-sm font-medium text-slate-600 hover:text-[#02529c] transition-colors"
             >
               Fresh Foods
             </Link>
 
             {/* Wishlist */}
-            <Link to="/orders" className="relative p-2 text-slate-600 hover:text-emerald-600 transition-colors" title="My Orders">
+            <Link to="/orders" className="relative p-2 text-slate-600 hover:text-[#02529c] transition-colors" title="My Orders">
               <Heart className="h-5.5 w-5.5" />
               {user?.wishlist?.length > 0 && (
-                <span className="absolute top-0 right-0 h-4.5 w-4.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
+                <span className="absolute top-0 right-0 h-4.5 w-4.5 rounded-full bg-[#8dc63f] text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
                   {user.wishlist.length}
                 </span>
               )}
@@ -139,17 +148,17 @@ const Navbar = () => {
             {/* Cart */}
             <Link
               to="/cart"
-              className="relative p-2 text-slate-600 hover:text-emerald-600 transition-colors flex items-center space-x-1"
+              className="relative p-2 text-slate-600 hover:text-[#02529c] transition-colors flex items-center space-x-1"
               title="Shopping Cart"
             >
               <ShoppingCart className="h-5.5 w-5.5" />
               {cartItems.length > 0 && (
-                <span className="absolute top-0 right-4 h-4.5 w-4.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
+                <span className="absolute top-0 right-4 h-4.5 w-4.5 rounded-full bg-[#8dc63f] text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
                   {cartItems.reduce((acc, item) => acc + item.qty, 0)}
                 </span>
               )}
               {cartItems.length > 0 && (
-                <span className="hidden xl:inline text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                <span className="hidden xl:inline text-xs font-semibold text-[#02529c] bg-blue-50 px-2 py-0.5 rounded-full">
                   ₹{cartItems.reduce((acc, item) => acc + item.price * item.qty, 0)}
                 </span>
               )}
@@ -159,25 +168,25 @@ const Navbar = () => {
             {user ? (
               <div className="relative group">
                 <button className="flex items-center space-x-1.5 focus:outline-none cursor-pointer">
-                  <div className="h-8 w-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-semibold text-sm border border-emerald-200 shadow-sm">
+                  <div className="h-8 w-8 rounded-full bg-blue-100 text-[#02529c] flex items-center justify-center font-semibold text-sm border border-blue-200 shadow-sm">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                   <span className="text-sm font-medium text-slate-700 max-w-[100px] truncate">{user.name.split(' ')[0]}</span>
                 </button>
 
                 <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-100 rounded-2xl shadow-xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform scale-95 group-hover:scale-100 z-50">
-                  {user.role === 'admin' && (
+                  {user && user.role === 'admin' && (
                     <Link
                       to="/admin"
-                      className="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                      className="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-[#02529c] transition-colors"
                     >
                       <Settings className="h-4 w-4 mr-2" />
-                      Admin Dashboard
+                      Seller Dashboard
                     </Link>
                   )}
                   <Link
                     to="/orders"
-                    className="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                    className="flex items-center px-4 py-2 text-sm text-slate-700 hover:bg-blue-50 hover:text-[#02529c] transition-colors"
                   >
                     <User className="h-4 w-4 mr-2" />
                     My Orders
@@ -195,7 +204,7 @@ const Navbar = () => {
             ) : (
               <Link
                 to="/login"
-                className="bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md shadow-emerald-100 transition-all duration-300 hover:translate-y-[-1px]"
+                className="bg-[#02529c] hover:bg-[#0b3c75] text-white text-sm font-semibold px-5 py-2.5 rounded-full shadow-md shadow-blue-100 transition-all duration-300 hover:translate-y-[-1px]"
               >
                 Sign In
               </Link>
@@ -204,10 +213,10 @@ const Navbar = () => {
 
           {/* Mobile navigation button */}
           <div className="flex items-center lg:hidden space-x-4">
-            <Link to="/cart" className="relative p-2 text-slate-600 hover:text-emerald-500">
+            <Link to="/cart" className="relative p-2 text-slate-600 hover:text-[#02529c]">
               <ShoppingCart className="h-5.5 w-5.5" />
               {cartItems.length > 0 && (
-                <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-emerald-500 text-white text-[9px] font-bold flex items-center justify-center">
+                <span className="absolute top-0 right-0 h-4 w-4 rounded-full bg-[#8dc63f] text-white text-[9px] font-bold flex items-center justify-center">
                   {cartItems.reduce((acc, item) => acc + item.qty, 0)}
                 </span>
               )}
@@ -215,7 +224,7 @@ const Navbar = () => {
 
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="p-2 text-slate-600 hover:text-emerald-500 focus:outline-none"
+              className="p-2 text-slate-600 hover:text-[#02529c] focus:outline-none"
             >
               {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
@@ -232,7 +241,7 @@ const Navbar = () => {
             placeholder="Search groceries..."
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-full px-4 py-2 pl-10 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            className="w-full bg-slate-50 border border-slate-200 text-slate-700 rounded-full px-4 py-2 pl-10 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-[#02529c]"
           />
           <Search className="absolute left-3.5 top-2.5 h-4 w-4 text-slate-400" />
           {speechSupported && (
@@ -255,40 +264,40 @@ const Navbar = () => {
           <Link
             to="/shop"
             onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
+            className="block px-3 py-2 rounded-lg text-base font-medium text-slate-600 hover:bg-slate-50 hover:text-[#02529c] transition-colors"
           >
             Browse All Products
           </Link>
           <Link
             to="/shop?category=Fruits & Vegetables"
             onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
+            className="block px-3 py-2 rounded-lg text-base font-medium text-slate-600 hover:bg-slate-50 hover:text-[#02529c] transition-colors"
           >
             Fruits & Vegetables
           </Link>
           <Link
             to="/shop?category=Dairy & Eggs"
             onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-lg text-base font-medium text-slate-600 hover:bg-slate-50 hover:text-emerald-600 transition-colors"
+            className="block px-3 py-2 rounded-lg text-base font-medium text-slate-600 hover:bg-slate-50 hover:text-[#02529c] transition-colors"
           >
             Dairy & Eggs
           </Link>
           <hr className="my-1 border-slate-100" />
           {user ? (
             <>
-              {user.role === 'admin' && (
+              {user && user.role === 'admin' && (
                 <Link
                   to="/admin"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
+                  className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-blue-50 hover:text-[#02529c]"
                 >
-                  Admin Dashboard
+                  Seller Dashboard
                 </Link>
               )}
               <Link
                 to="/orders"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
+                className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-blue-50 hover:text-[#02529c]"
               >
                 My Orders
               </Link>
@@ -306,7 +315,7 @@ const Navbar = () => {
             <Link
               to="/login"
               onClick={() => setMobileMenuOpen(false)}
-              className="block text-center bg-emerald-500 text-white font-semibold py-2.5 rounded-lg shadow-sm"
+              className="block text-center bg-[#02529c] text-white font-semibold py-2.5 rounded-lg shadow-sm"
             >
               Sign In
             </Link>
@@ -314,6 +323,7 @@ const Navbar = () => {
         </div>
       )}
     </header>
+  </>
   );
 };
 

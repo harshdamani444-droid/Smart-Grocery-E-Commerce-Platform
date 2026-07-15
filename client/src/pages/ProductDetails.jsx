@@ -214,7 +214,7 @@ const ProductDetails = () => {
             <MapPin className="h-4 w-4" />
             <span>Smart Store Locator</span>
           </div>
-          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight mt-1">Nearby DMart Store Availability</h2>
+          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight mt-1">Nearby HD Mart Store Availability</h2>
           <p className="text-slate-500 text-sm">Check real-time stock levels and distances across physical branches</p>
         </div>
 

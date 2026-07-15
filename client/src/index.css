@@ -40,6 +40,29 @@
   animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
+/* DMart Theme & Utility Customizations */
+.dmart-blue-gradient {
+  background: linear-gradient(135deg, #02529c 0%, #104f9b 100%);
+}
+
+.dmart-btn-primary {
+  background-color: #02529c;
+  color: white;
+  transition: all 0.2s ease-in-out;
+}
+.dmart-btn-primary:hover {
+  background-color: #0b3c75;
+}
+
+.dmart-btn-accent {
+  background-color: #8dc63f;
+  color: white;
+  transition: all 0.2s ease-in-out;
+}
+.dmart-btn-accent:hover {
+  background-color: #79ab33;
+}
+
 /* Glassmorphism Classes */
 .glass-panel {
   background: rgba(255, 255, 255, 0.7);

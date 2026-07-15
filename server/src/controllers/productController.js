@@ -89,9 +89,9 @@ export const createProduct = async (req, res) => {
       barcode,
       unit,
       storeAvailability: storeAvailability || [
-        { storeName: 'DMart Powai', stock: Math.floor(stock * 0.4), lat: 19.1176, lng: 72.9060 },
-        { storeName: 'DMart Malad', stock: Math.floor(stock * 0.3), lat: 19.1860, lng: 72.8485 },
-        { storeName: 'DMart Thane', stock: Math.floor(stock * 0.3), lat: 19.2183, lng: 72.9781 }
+        { storeName: 'HD Mart Powai', stock: Math.floor(stock * 0.4), lat: 19.1176, lng: 72.9060 },
+        { storeName: 'HD Mart Malad', stock: Math.floor(stock * 0.3), lat: 19.1860, lng: 72.8485 },
+        { storeName: 'HD Mart Thane', stock: Math.floor(stock * 0.3), lat: 19.2183, lng: 72.9781 }
       ],
       tags: tags || [category.toLowerCase(), name.toLowerCase()]
     });

@@ -12,7 +12,6 @@ const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState('customer');
   const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +36,7 @@ const Register = () => {
     setErrorMsg('');
     setLoading(true);
 
-    const res = await register(name, email, password, role);
+    const res = await register(name, email, password, 'customer');
     if (!res.success) {
       setErrorMsg(res.message);
       setLoading(false);
@@ -124,34 +123,6 @@ const Register = () => {
             </div>
           </div>
 
-          {/* Account Role Selector */}
-          <div>
-            <label className="block text-slate-600 text-xs font-semibold mb-1">I want to Register as a:</label>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                type="button"
-                onClick={() => setRole('customer')}
-                className={`py-2.5 px-4 text-xs font-bold rounded-2xl border transition-all cursor-pointer ${
-                  role === 'customer'
-                    ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm shadow-emerald-50'
-                    : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
-                }`}
-              >
-                🛒 Buyer (Customer)
-              </button>
-              <button
-                type="button"
-                onClick={() => setRole('admin')}
-                className={`py-2.5 px-4 text-xs font-bold rounded-2xl border transition-all cursor-pointer ${
-                  role === 'admin'
-                    ? 'bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm shadow-emerald-50'
-                    : 'bg-slate-50 border-slate-200 text-slate-500 hover:bg-slate-100'
-                }`}
-              >
-                🏪 Seller (Merchant)
-              </button>
-            </div>
-          </div>
 
           <button
             type="submit"

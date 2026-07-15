@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { DollarSign, ShoppingBag, AlertTriangle, Trash2, Edit3, PlusCircle, Settings, CheckCircle2, ChevronRight, X } from 'lucide-react';
+import { DollarSign, ShoppingBag, AlertTriangle, Trash2, Edit3, PlusCircle, Settings, CheckCircle2, ChevronRight, X, Loader2 } from 'lucide-react';
 import api from '../utils/api';
 
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#64748b'];
@@ -32,6 +33,14 @@ const AdminDashboard = () => {
 
   // Orders state
   const [orders, setOrders] = useState([]);
+
+  // Payment settings state
+  const [settingsKeyId, setSettingsKeyId] = useState('');
+  const [settingsKeySecret, setSettingsKeySecret] = useState('');
+  const [isRzpConfigured, setIsRzpConfigured] = useState(false);
+  const [settingsMsg, setSettingsMsg] = useState('');
+  const [settingsError, setSettingsError] = useState('');
+  const [savingSettings, setSavingSettings] = useState(false);
 
   const loadAnalytics = async () => {
     try {
@@ -66,10 +75,45 @@ const AdminDashboard = () => {
     }
   };
 
+  const loadSettings = async () => {
+    try {
+      const { data } = await api.get('/payment/config');
+      setSettingsKeyId(data.keyId);
+      setIsRzpConfigured(data.isConfigured);
+      if (data.hasSecret) {
+        setSettingsKeySecret('••••••••••••••••');
+      } else {
+        setSettingsKeySecret('');
+      }
+    } catch (err) {
+      console.error('Error loading payment configuration:', err);
+    }
+  };
+
+  const handleSaveSettings = async (e) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    setSettingsMsg('');
+    setSettingsError('');
+    try {
+      await api.post('/payment/config', {
+        keyId: settingsKeyId,
+        keySecret: settingsKeySecret
+      });
+      setSettingsMsg('Razorpay configuration updated successfully!');
+      setIsRzpConfigured(true);
+    } catch (err) {
+      setSettingsError(err.response?.data?.message || 'Error updating settings.');
+    } finally {
+      setSavingSettings(false);
+    }
+  };
+
   useEffect(() => {
     loadAnalytics();
     loadProducts();
     loadOrders();
+    loadSettings();
   }, []);
 
   const handleProductDelete = async (id) => {
@@ -193,6 +237,14 @@ const AdminDashboard = () => {
             }`}
           >
             Orders
+          </button>
+          <button
+            onClick={() => setActiveTab('settings')}
+            className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              activeTab === 'settings' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            Settings
           </button>
         </div>
       </div>
@@ -439,6 +491,86 @@ const AdminDashboard = () => {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'settings' && (
+        <div className="bg-white border border-slate-100 rounded-3xl shadow-sm p-6 space-y-6 max-w-2xl animate-scale-in">
+          <div className="border-b border-slate-50 pb-4">
+            <h3 className="font-extrabold text-slate-900 text-base">Payment Gateway Settings</h3>
+            <p className="text-xs text-slate-500 mt-1">Configure your official Razorpay keys to enable native checkout payments.</p>
+          </div>
+
+          <form onSubmit={handleSaveSettings} className="space-y-4">
+            {/* Status indicator badge */}
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-slate-500 font-bold">Integration Status:</span>
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                isRzpConfigured 
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                  : 'bg-amber-50 text-amber-700 border border-amber-100 animate-pulse'
+              }`}>
+                {isRzpConfigured ? 'Active (Live/Test Mode)' : 'Simulation Sandbox Mode (Keys Missing)'}
+              </span>
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-xs font-semibold text-slate-700">Razorpay Key ID</label>
+              <input
+                type="text"
+                placeholder="rzp_test_..."
+                value={settingsKeyId}
+                onChange={(e) => setSettingsKeyId(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+                required
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-xs font-semibold text-slate-700">Razorpay Key Secret</label>
+              <input
+                type="password"
+                placeholder="Enter Key Secret"
+                value={settingsKeySecret}
+                onChange={(e) => setSettingsKeySecret(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
+                required
+              />
+            </div>
+
+            {settingsMsg && (
+              <div className="p-3 bg-emerald-50 border border-emerald-100 text-emerald-800 text-xs rounded-xl font-medium">
+                {settingsMsg}
+              </div>
+            )}
+            {settingsError && (
+              <div className="p-3 bg-red-50 border border-red-100 text-red-800 text-xs rounded-xl font-medium">
+                {settingsError}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={savingSettings}
+              className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white text-xs font-bold py-3 px-6 rounded-xl transition-all shadow-md flex items-center justify-center space-x-1.5 cursor-pointer"
+            >
+              {savingSettings ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Saving Configuration...</span>
+                </>
+              ) : (
+                <span>Save Gateway Configuration</span>
+              )}
+            </button>
+          </form>
+
+          <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Where to get credentials?</span>
+            <p className="text-[11px] text-slate-600 leading-normal">
+              Sign up or log in to your dashboard at <a href="https://dashboard.razorpay.com" target="_blank" rel="noreferrer" className="text-emerald-600 font-bold hover:underline">Razorpay Dashboard</a>. Switch the environment to <strong>Test Mode</strong>, navigate to <strong>Account & Settings</strong> &rarr; <strong>API Keys</strong>, and click <strong>Generate Key</strong>.
+            </p>
+          </div>
         </div>
       )}
 
