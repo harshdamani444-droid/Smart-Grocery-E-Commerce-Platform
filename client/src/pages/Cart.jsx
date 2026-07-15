@@ -43,8 +43,8 @@ const Cart = () => {
   const [modalError, setModalError] = useState('');
   const [placingOrder, setPlacingOrder] = useState(false);
 
-  // Razorpay Integration States
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('razorpay');
+  // Payment Integration States
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('direct_upi');
   const [showRzpMockModal, setShowRzpMockModal] = useState(false);
   const [rzpMockDetails, setRzpMockDetails] = useState(null);
   const [rzpMockUpi, setRzpMockUpi] = useState('success@razorpay');
@@ -440,52 +440,22 @@ const Cart = () => {
               <CreditCard className="h-5 w-5 mr-2 text-emerald-500" />
               Select Payment Method
             </h3>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {/* Razorpay Option */}
-              <button
-                type="button"
-                onClick={() => setSelectedPaymentMethod('razorpay')}
-                className={`flex flex-col items-start p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden ${
-                  selectedPaymentMethod === 'razorpay'
-                    ? 'border-emerald-500 bg-emerald-50/30 ring-1 ring-emerald-500'
-                    : 'border-slate-200 hover:border-slate-300 bg-white'
-                }`}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="font-extrabold text-slate-900 text-xs">Razorpay Secure</span>
-                  {selectedPaymentMethod === 'razorpay' && (
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  )}
-                </div>
-                <span className="text-[10px] text-slate-500 mt-1 leading-snug">
-                  Pay securely via UPI, Cards, Netbanking, or Wallets. (Free Test Mode)
-                </span>
-                <span className="inline-block mt-3 px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded text-[9px] font-bold">
-                  Recommended
-                </span>
-              </button>
-
+            <div className="max-w-md">
               {/* Direct UPI Scan Option */}
               <button
                 type="button"
                 onClick={() => setSelectedPaymentMethod('direct_upi')}
-                className={`flex flex-col items-start p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden ${
-                  selectedPaymentMethod === 'direct_upi'
-                    ? 'border-emerald-500 bg-emerald-50/30 ring-1 ring-emerald-500'
-                    : 'border-slate-200 hover:border-slate-300 bg-white'
-                }`}
+                className="flex flex-col items-start p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden border-emerald-500 bg-emerald-50/30 ring-1 ring-emerald-500 w-full"
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="font-extrabold text-slate-900 text-xs">Direct UPI Scan</span>
-                  {selectedPaymentMethod === 'direct_upi' && (
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                  )}
+                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 </div>
                 <span className="text-[10px] text-slate-500 mt-1 leading-snug">
                   Scan QR code manually and enter 12-digit UTR transaction ref.
                 </span>
-                <span className="inline-block mt-3 px-2 py-0.5 bg-slate-100 text-slate-700 rounded text-[9px] font-bold">
-                  Manual Verification
+                <span className="inline-block mt-3 px-2 py-0.5 bg-[#02529c] text-white rounded text-[9px] font-bold">
+                  Active Payment Mode
                 </span>
               </button>
             </div>
