@@ -56,7 +56,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">HD Mart</h3>
+            <img src="/logo.png" alt="HD Mart Logo" className="h-10 w-auto object-contain mb-4 bg-white/90 p-1.5 rounded-xl inline-block" />
             <p className="text-sm text-slate-500 leading-relaxed mb-4">
               Premium quality grocery shopping at HD Mart. Get fresh foods, milk, household cleaning items delivered to your slot.
             </p>

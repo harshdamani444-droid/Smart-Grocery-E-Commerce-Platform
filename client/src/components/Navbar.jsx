@@ -88,11 +88,8 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16 sm:h-20">
           
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2.5 flex-shrink-0">
-            <img src="/logo.png" alt="HD Mart Logo" className="h-9 sm:h-11 object-contain" />
-            <span className="hidden sm:block text-xl font-black text-[#02529c]">
-              HD <span className="text-[#8dc63f]">Mart</span>
-            </span>
+          <Link to="/" className="flex items-center flex-shrink-0">
+            <img src="/logo.png" alt="HD Mart Logo" className="h-10 sm:h-12 w-auto object-contain" />
           </Link>
 
           {/* Search bar & Voice Search */}
