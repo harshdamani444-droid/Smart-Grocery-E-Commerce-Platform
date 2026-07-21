@@ -89,7 +89,7 @@ const Navbar = () => {
           
           {/* Logo */}
           <Link to="/" className="flex items-center flex-shrink-0">
-            <img src="/logo.png" alt="HD Mart Logo" className="h-10 sm:h-12 w-auto object-contain" />
+            <img src="/logo.png" alt="HD Mart Logo" className="h-12 sm:h-16 w-auto object-contain" />
           </Link>
 
           {/* Search bar & Voice Search */}
