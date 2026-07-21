@@ -11,16 +11,16 @@ export const getPaymentConfig = () => {
     if (fs.existsSync(configPath)) {
       const data = JSON.parse(fs.readFileSync(configPath, 'utf8'));
       return {
-        keyId: data.keyId || process.env.RAZORPAY_KEY_ID || '',
-        keySecret: data.keySecret || process.env.RAZORPAY_KEY_SECRET || ''
+        keyId: data.keyId || process.env.RAZORPAY_KEY_ID || 'rzp_test_TG9RXb0cmHExLb',
+        keySecret: data.keySecret || process.env.RAZORPAY_KEY_SECRET || 't25JeH50NYQN4iZRGvkQGB0X'
       };
     }
   } catch (err) {
     console.error('Error reading payment config:', err.message);
   }
   return {
-    keyId: process.env.RAZORPAY_KEY_ID || '',
-    keySecret: process.env.RAZORPAY_KEY_SECRET || ''
+    keyId: process.env.RAZORPAY_KEY_ID || 'rzp_test_TG9RXb0cmHExLb',
+    keySecret: process.env.RAZORPAY_KEY_SECRET || 't25JeH50NYQN4iZRGvkQGB0X'
   };
 };
 
