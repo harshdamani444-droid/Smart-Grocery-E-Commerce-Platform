@@ -36,15 +36,9 @@ const Cart = () => {
   const [zipCode, setZipCode] = useState('');
   const [checkoutMsg, setCheckoutMsg] = useState('');
 
-  // Payment popup mockup
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [upiId, setUpiId] = useState('harshdamani444@oksbi');
-  const [utrNumber, setUtrNumber] = useState('');
-  const [modalError, setModalError] = useState('');
   const [placingOrder, setPlacingOrder] = useState(false);
 
-  // Payment Integration States
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('direct_upi');
+  // Razorpay Payment States
   const [showRzpMockModal, setShowRzpMockModal] = useState(false);
   const [rzpMockDetails, setRzpMockDetails] = useState(null);
   const [rzpMockUpi, setRzpMockUpi] = useState('success@razorpay');
@@ -119,99 +113,105 @@ const Cart = () => {
       return;
     }
     setCheckoutMsg('');
+    setPlacingOrder(true);
 
-    if (selectedPaymentMethod === 'direct_upi') {
-      setUtrNumber('');
-      setModalError('');
-      setShowPaymentModal(true);
-    } else {
-      // Razorpay checkout flow
-      setPlacingOrder(true);
-      try {
-        const orderData = {
-          orderItems: cartItems.map(item => ({
-            name: item.name,
-            qty: item.qty,
-            image: item.image,
-            price: item.price,
-            product: item._id
-          })),
-          shippingAddress: { street, city, state, zipCode },
-          paymentMethod: 'Razorpay',
-          deliverySlot,
-          deliveryDate,
-          itemsPrice,
-          taxPrice,
-          shippingPrice,
-          discountPrice,
-          totalPrice
+    try {
+      const orderData = {
+        orderItems: cartItems.map(item => ({
+          name: item.name,
+          qty: item.qty,
+          image: item.image,
+          price: item.price,
+          product: item._id
+        })),
+        shippingAddress: { street, city, state, zipCode },
+        paymentMethod: 'Razorpay',
+        deliverySlot,
+        deliveryDate,
+        itemsPrice,
+        taxPrice,
+        shippingPrice,
+        discountPrice,
+        totalPrice
+      };
+
+      // 1. Create order in database
+      const { data: order } = await api.post('/orders', orderData);
+
+      // 2. Generate Razorpay order from backend
+      const { data: rzpOrderRes } = await api.post('/payment/razorpay/order', { orderId: order._id });
+
+      if (rzpOrderRes.isMock) {
+        // Keys not configured — show simulation modal
+        setRzpMockDetails({
+          orderId: order._id,
+          rzpOrderId: rzpOrderRes.orderId,
+          amount: totalPrice
+        });
+        setShowRzpMockModal(true);
+        setPlacingOrder(false);
+      } else {
+        // 3. Load Razorpay checkout script
+        const isLoaded = await loadRazorpayScript();
+        if (!isLoaded) {
+          setCheckoutMsg('Failed to load Razorpay SDK. Please check your internet connection.');
+          setPlacingOrder(false);
+          return;
+        }
+
+        const options = {
+          key: rzpOrderRes.keyId,
+          amount: rzpOrderRes.amount,
+          currency: rzpOrderRes.currency,
+          name: 'HD Mart',
+          description: `Order #${order._id.substring(18)}`,
+          order_id: rzpOrderRes.orderId,
+          config: {
+            display: {
+              blocks: {
+                upi: { name: 'Pay via UPI', instruments: [{ method: 'upi' }] },
+                other: { name: 'Other Methods', instruments: [{ method: 'card' }, { method: 'netbanking' }] }
+              },
+              sequence: ['block.upi', 'block.other'],
+              preferences: { show_default_blocks: false }
+            }
+          },
+          handler: async function (response) {
+            setPlacingOrder(true);
+            try {
+              const verifyPayload = {
+                orderId: order._id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                isMock: false
+              };
+              await api.post('/payment/razorpay/verify', verifyPayload);
+              clearCart();
+              navigate(`/orders/${order._id}`);
+            } catch (err) {
+              setCheckoutMsg(err.response?.data?.message || 'Payment verification failed.');
+            } finally {
+              setPlacingOrder(false);
+            }
+          },
+          prefill: { name: user.name, email: user.email },
+          theme: { color: '#1780EB' },
+          modal: {
+            ondismiss: function () {
+              setCheckoutMsg('Payment cancelled.');
+              setPlacingOrder(false);
+            }
+          }
         };
 
-        // 1. Create order on database
-        const { data: order } = await api.post('/orders', orderData);
-
-        // 2. Generate Razorpay order from backend
-        const { data: rzpOrderRes } = await api.post('/payment/razorpay/order', { orderId: order._id });
-
-        if (rzpOrderRes.isMock) {
-          // If keys are not configured, trigger the mock simulation modal
-          setRzpMockDetails({
-            orderId: order._id,
-            rzpOrderId: rzpOrderRes.orderId,
-            amount: totalPrice
-          });
-          setShowRzpMockModal(true);
-        } else {
-          // Load Razorpay Script
-          const isLoaded = await loadRazorpayScript();
-          if (!isLoaded) {
-            setCheckoutMsg('Failed to load Razorpay SDK. Please check your internet connection.');
-            return;
-          }
-
-          const options = {
-            key: rzpOrderRes.keyId,
-            amount: rzpOrderRes.amount,
-            currency: rzpOrderRes.currency,
-            name: 'Smart Grocery Platform',
-            description: `Checkout for Order #${order._id.substring(12)}`,
-            order_id: rzpOrderRes.orderId,
-            handler: async function (response) {
-              setPlacingOrder(true);
-              try {
-                const verifyPayload = {
-                  orderId: order._id,
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_signature: response.razorpay_signature,
-                  isMock: false
-                };
-                await api.post('/payment/razorpay/verify', verifyPayload);
-                clearCart();
-                navigate(`/orders/${order._id}`);
-              } catch (err) {
-                setCheckoutMsg(err.response?.data?.message || 'Payment signature verification failed.');
-              } finally {
-                setPlacingOrder(false);
-              }
-            },
-            prefill: {
-              name: user.name,
-              email: user.email
-            },
-            theme: {
-              color: '#10b981'
-            }
-          };
-
-          const rzpInstance = new window.Razorpay(options);
-          rzpInstance.open();
-        }
-      } catch (err) {
-        setCheckoutMsg(err.response?.data?.message || 'Error starting payment process.');
-      } finally {
+        const rzpInstance = new window.Razorpay(options);
+        rzpInstance.open();
         setPlacingOrder(false);
       }
+    } catch (err) {
+      setCheckoutMsg(err.response?.data?.message || 'Error starting payment. Please try again.');
+      setPlacingOrder(false);
     }
   };
 
@@ -434,30 +434,32 @@ const Cart = () => {
             </div>
           </div>
 
-          {/* Payment Method Selector */}
+          {/* Payment Method - Razorpay Only */}
           <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm space-y-4">
             <h3 className="font-bold text-slate-800 text-base flex items-center pb-3 border-b border-slate-50">
               <CreditCard className="h-5 w-5 mr-2 text-emerald-500" />
-              Select Payment Method
+              Payment Method
             </h3>
             <div className="max-w-md">
-              {/* Direct UPI Scan Option */}
-              <button
-                type="button"
-                onClick={() => setSelectedPaymentMethod('direct_upi')}
-                className="flex flex-col items-start p-4 rounded-2xl border text-left transition-all cursor-pointer relative overflow-hidden border-emerald-500 bg-emerald-50/30 ring-1 ring-emerald-500 w-full"
-              >
+              <div className="flex flex-col items-start p-5 rounded-2xl border border-blue-500 bg-blue-50/30 ring-1 ring-blue-500 w-full">
                 <div className="flex items-center justify-between w-full">
-                  <span className="font-extrabold text-slate-900 text-xs">Direct UPI Scan</span>
-                  <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                  <div className="flex items-center space-x-2">
+                    <span className="text-[#1780EB] font-black text-base italic tracking-tight">Razorpay</span>
+                    <span className="text-[9px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full">✓ ACTIVE</span>
+                  </div>
+                  <span className="h-2.5 w-2.5 rounded-full bg-blue-500" />
                 </div>
-                <span className="text-[10px] text-slate-500 mt-1 leading-snug">
-                  Scan QR code manually and enter 12-digit UTR transaction ref.
+                <span className="text-[11px] text-slate-600 mt-2 leading-snug">
+                  Pay securely using UPI, Debit/Credit Card, or NetBanking
                 </span>
-                <span className="inline-block mt-3 px-2 py-0.5 bg-[#02529c] text-white rounded text-[9px] font-bold">
-                  Active Payment Mode
-                </span>
-              </button>
+                <div className="flex gap-1.5 mt-3 flex-wrap">
+                  <span className="text-[10px] bg-emerald-100 text-emerald-700 font-bold px-2 py-0.5 rounded">📱 UPI</span>
+                  <span className="text-[10px] bg-purple-100 text-purple-700 font-bold px-2 py-0.5 rounded">💳 Cards</span>
+                  <span className="text-[10px] bg-orange-100 text-orange-700 font-bold px-2 py-0.5 rounded">🏦 NetBanking</span>
+                  <span className="text-[10px] bg-slate-100 text-slate-600 font-bold px-2 py-0.5 rounded">🔒 256-bit Secure</span>
+                </div>
+                <p className="text-[10px] text-slate-400 mt-2">GPay · PhonePe · Paytm · BHIM · All UPI Apps supported</p>
+              </div>
             </div>
           </div>
         </div>
@@ -652,110 +654,6 @@ const Cart = () => {
         </div>
       )}
 
-      {/* Payment Gateway Modal Mockup */}
-      {showPaymentModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full border border-slate-100 shadow-2xl space-y-6 relative overflow-hidden animate-scale-in animate-duration-200">
-            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 to-teal-500" />
-            
-            <div className="text-center space-y-2">
-              <div className="h-14 w-14 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto">
-                <QrCode className="h-6 w-6" />
-              </div>
-              <h3 className="text-lg font-extrabold text-slate-900">UPI Payment Scanner</h3>
-              <p className="text-slate-500 text-xs">
-                Scan the QR code below with any UPI App (GPay, PhonePe, Paytm, etc.) to complete payment, then enter the UTR code below.
-              </p>
-            </div>
-
-            {/* UPI QR Code Display & ID Configuration */}
-            <div className="flex flex-col items-center justify-center space-y-3 py-1">
-              <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl shadow-inner flex items-center justify-center">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi://pay?pa=${upiId}&pn=HD%20Mart&am=${totalPrice}&cu=INR`}
-                  alt="UPI QR Code"
-                  className="h-44 w-44 object-contain bg-white rounded-xl p-1 border border-slate-200"
-                />
-              </div>
-              
-              {/* UPI ID input so user can edit it dynamically */}
-              <div className="w-full max-w-xs space-y-1">
-                <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">Recipient UPI ID</label>
-                <input
-                  type="text"
-                  value={upiId}
-                  onChange={(e) => setUpiId(e.target.value)}
-                  placeholder="name@upi"
-                  className="w-full text-center bg-slate-50 border border-slate-200 rounded-xl py-1.5 px-3 text-xs font-mono text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                />
-              </div>
-            </div>
-
-            {/* Total display */}
-            <div className="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex items-center justify-between">
-              <div>
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Payee Amount</span>
-                <span className="font-bold text-slate-800 text-sm">{user?.name}</span>
-              </div>
-              <span className="text-lg font-extrabold text-slate-900">₹{totalPrice}</span>
-            </div>
-
-            {/* UTR reference input */}
-            <div className="space-y-1">
-              <label className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Transaction Ref No. (12-digit UTR)</label>
-              <input
-                type="text"
-                maxLength="12"
-                placeholder="Enter 12-digit UPI UTR Number"
-                value={utrNumber}
-                onChange={(e) => {
-                  setUtrNumber(e.target.value);
-                  setModalError('');
-                }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs font-mono text-center text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white"
-              />
-              {modalError && <span className="text-[10px] text-red-500 font-bold text-center block">{modalError}</span>}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() => {
-                  const cleanedUtr = utrNumber.trim();
-                  if (!cleanedUtr) {
-                    setModalError('Transaction ID / UTR is required.');
-                    return;
-                  }
-                  if (cleanedUtr.length !== 12 || !/^\d+$/.test(cleanedUtr)) {
-                    setModalError('UTR must be exactly 12 numeric digits.');
-                    return;
-                  }
-                  setModalError('');
-                  handlePaymentSuccessSimulate(cleanedUtr);
-                }}
-                disabled={placingOrder}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold py-3 px-4 rounded-xl transition-all shadow-md flex items-center justify-center space-x-1 cursor-pointer disabled:opacity-50"
-              >
-                {placingOrder ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <>
-                    <Sparkles className="h-4 w-4" />
-                    <span>Confirm UPI Payment</span>
-                  </>
-                )}
-              </button>
-              
-              <button
-                onClick={() => setShowPaymentModal(false)}
-                disabled={placingOrder}
-                className="bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold py-3 px-4 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );

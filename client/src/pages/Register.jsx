@@ -47,7 +47,7 @@ const Register = () => {
     <div className="min-h-[500px] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-100 shadow-xl space-y-6 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 to-teal-500" />
-        
+
         {/* Title */}
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Create Account</h2>
